@@ -21,6 +21,7 @@ namespace ConsoleApp1
 
         /// All pages visited
         private static Dictionary<string, string> allCheckedPages = new Dictionary<string, string>();
+        private static Dictionary<string, int> pageCount = new Dictionary<string, int>();
 
         /// A Url that the crawled page must start with. 
         public static string siteName { get; set; }
@@ -93,10 +94,12 @@ namespace ConsoleApp1
                 {
                     Console.WriteLine("Done crawling");
 
+
+                    var max = pageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
                     //write closing HTML tags to the file
                     using (FileStream indexFile = File.Open("C:\\Users\\alexk\\source\\repos\\ConsolePro\\ConsoleApp1\\index.html", FileMode.Append))
                     {
-                        Byte[] info = new UTF8Encoding(true).GetBytes("</ul><p>There are " +allCheckedPages.Count().ToString()+" pages contained in the domain of "+Pathfinder.beginning+"</body>\n</html>"); 
+                        Byte[] info = new UTF8Encoding(true).GetBytes("</ul><p>There are " +allCheckedPages.Count().ToString()+" pages contained in the domain of "+Pathfinder.beginning+" <br/> The page with the most links is "+pageCount[max]+" with "+max+" links</body>\n</html>"); 
                         indexFile.Write(info, 0, info.Length);
                     }
                     return;
@@ -136,6 +139,7 @@ namespace ConsoleApp1
                 if (!allCheckedPages.ContainsKey(webUrl) && !allCheckedPages.ContainsValue(title))
                 {
                     allCheckedPages.Add(webUrl, title);
+                    pageCount.Add(webUrl, 1);
                     //the page passed the tests so it is added
                     visited(webUrl, title);
 
@@ -200,6 +204,7 @@ namespace ConsoleApp1
                     //if the page has been visited skip it
                     if (allCheckedPages.ContainsKey(newLink))
                     {
+                        pageCount[newLink]=pageCount[newLink]+1;
                         continue;
                     }
 
