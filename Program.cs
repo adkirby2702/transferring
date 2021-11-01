@@ -37,11 +37,11 @@ namespace ConsoleApp1
         public static string title = "not provided";
         public static void Main()
         {
-            if (File.Exists("C:\\Users\\alexk\\source\\repos\\ConsolePro\\ConsoleApp1\\index.html"))
+            if (File.Exists("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html"))
             {
-                File.Delete("C:\\Users\\alexk\\source\\repos\\ConsolePro\\ConsoleApp1\\index.html");
+                File.Delete("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html");
             }
-            File.WriteAllText("C:\\Users\\alexk\\source\\repos\\ConsolePro\\ConsoleApp1\\index.html","<!DOCTYPE html>\n<html>\n<head>\n<title> All Pages </title>\n<style>\n@import 'StyleSheet1.css';\n</style>\n</head><br/>\n<body>\n<h1> All Pages </h1>\n<div><ul>");
+            File.WriteAllText("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html", "<!DOCTYPE html>\n<html>\n<head>\n<title> All Pages </title>\n<style>\n@import 'D:\\\\Users\\\\adkir\\\\source\\\\repos\\\\ConsoleApp1\\\\StyleSheet1.css';\n</style>\n</head><br/>\n<body>\n<h1> All Pages </h1>\n<div><ul>");
 
 
             Pathfinder.visited = (webUrl, title) =>
@@ -51,22 +51,31 @@ namespace ConsoleApp1
                 File.AppendAllText(filePath, webUrl + "," + title + "\n");
                 totalCount += 1;
                 Console.WriteLine(totalCount);
-                Pathfinder.driver.Navigate().GoToUrl(webUrl);
-                Screenshot ss = ((ITakesScreenshot)driver).GetScreenshot();
-                ss.SaveAsFile("C:\\Users\\alexk\\Desktop\\screenshotTest\\screenshot" + allCheckedPages.Count().ToString() + ".png", ScreenshotImageFormat.Png);
-                using (FileStream indexFile = File.Open("C:\\Users\\alexk\\source\\repos\\ConsolePro\\ConsoleApp1\\index.html", FileMode.Append))
+                try{
+                    Pathfinder.driver.Navigate().GoToUrl(webUrl);
+                 
+                }
+                catch
                 {
-                    Byte[] info = new UTF8Encoding(true).GetBytes("<li><a href='C:\\Users\\alexk\\Desktop\\screenshotTest\\screenshot" + allCheckedPages.Count().ToString() + ".png'>" + title + " </a></li>\n");
+
+                    return;
+                }
+                Screenshot ss = ((ITakesScreenshot)driver).GetScreenshot();
+                ss.SaveAsFile("D:\\adkir\\Desktop\\screenshotTest\\screenshot" + allCheckedPages.Count().ToString() + ".png", ScreenshotImageFormat.Png);
+                using (FileStream indexFile = File.Open("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html", FileMode.Append))
+                {
+                    Byte[] info = new UTF8Encoding(true).GetBytes("<li><a href='D:\\adkir\\Desktop\\screenshotTest\\screenshot" + allCheckedPages.Count().ToString() + ".png'>" + title + " </a></li>\n");
                     // Add some information to the file.  
                     indexFile.Write(info, 0, info.Length);
                 }
 
 
             };
-            Pathfinder.beginning = new Uri("http://www.peanuts.com");
-            Pathfinder.siteName = "http://www.peanuts.com";
+            Pathfinder.beginning = new Uri("https://peanuts.com/");
+            Pathfinder.siteName = "https://peanuts.com/";
             Pathfinder.driver = new ChromeDriver();
             Pathfinder.driver.Navigate().GoToUrl(Pathfinder.beginning);
+            Pathfinder.driver.FindElement(By.Id("cookie-dismiss")).Click();
 
             Pathfinder.Start();
 
@@ -92,16 +101,15 @@ namespace ConsoleApp1
                 //if there is nothing left in queueToCheck
                 if (queueToCheck.Count == 0)
                 {
-                    Console.WriteLine("Done crawling");
-
-
                     var max = pageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
-                    //write closing HTML tags to the file
-                    using (FileStream indexFile = File.Open("C:\\Users\\alexk\\source\\repos\\ConsolePro\\ConsoleApp1\\index.html", FileMode.Append))
+                    Console.WriteLine("Done crawling");
+                    using (FileStream indexFile = File.Open("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html", FileMode.Append))
                     {
-                        Byte[] info = new UTF8Encoding(true).GetBytes("</ul><p>There are " +allCheckedPages.Count().ToString()+" pages contained in the domain of "+Pathfinder.beginning+" <br/> The page with the most links is "+pageCount[max]+" with "+max+" links</body>\n</html>"); 
+                        Byte[] info = new UTF8Encoding(true).GetBytes("</ul><p>There are " + allCheckedPages.Count().ToString() + " pages contained in the domain of " + Pathfinder.beginning + " <br/> The page with the most links is " + max+ " with " + pageCount[max] + " links</body>\n</html>");
+                        // Add some information to the file.  
                         indexFile.Write(info, 0, info.Length);
                     }
+                    Pathfinder.driver.Close();
                     return;
                 }
 
@@ -125,21 +133,21 @@ namespace ConsoleApp1
                 doc.OptionEmptyCollection = true;
                 try
                 {
-                    title = doc.DocumentNode.SelectSingleNode("html/head/title").InnerText;
+                   title = doc.DocumentNode.SelectSingleNode("html/head/title").InnerText;
                 }
-                catch (System.NullReferenceException)
+                catch(System.NullReferenceException)
                 {
                     title = "not provided";
                 }
-                if (allCheckedPages.ContainsKey(webUrl) || allCheckedPages.ContainsValue(title))
+                if (allCheckedPages.ContainsKey(webUrl)|| allCheckedPages.ContainsValue(title))
                 {
                     continue;
                 }
 
-                if (!allCheckedPages.ContainsKey(webUrl) && !allCheckedPages.ContainsValue(title))
+                if (!allCheckedPages.ContainsKey(webUrl)&&!allCheckedPages.ContainsValue(title))
                 {
-                    allCheckedPages.Add(webUrl, title);
                     pageCount.Add(webUrl, 1);
+                    allCheckedPages.Add(webUrl, title);
                     //the page passed the tests so it is added
                     visited(webUrl, title);
 
@@ -150,7 +158,7 @@ namespace ConsoleApp1
                     continue;
                 }
                 var root = webUrl.Substring(0, webUrl.LastIndexOf('/'));
-
+                
                 //find the links in the page
                 foreach (var link in doc.DocumentNode.SelectNodes("//a[@href]"))
                 {
@@ -185,7 +193,7 @@ namespace ConsoleApp1
                         if (!newLink.StartsWith("/")) newLink = "/" + newLink;
                         newLink = root + newLink;
                     }
-
+                    
 
 
                     //if the site goes to something outside of the given starting url
@@ -194,7 +202,7 @@ namespace ConsoleApp1
 
                         continue;
                     }
-
+                    
                     //skip child pages of pages with query strings
                     if (newLink.Contains("?") && webUrl.Contains("?"))
                     {
@@ -204,7 +212,7 @@ namespace ConsoleApp1
                     //if the page has been visited skip it
                     if (allCheckedPages.ContainsKey(newLink))
                     {
-                        pageCount[newLink]=pageCount[newLink]+1;
+                        pageCount[newLink] = pageCount[newLink] + 1;
                         continue;
                     }
 
@@ -214,6 +222,10 @@ namespace ConsoleApp1
                         // Recent Duplicate
                         continue;
                     }
+
+                   
+
+                    Console.WriteLine(newLink);
                     queueToCheck.Enqueue(newLink);
                 }
             }
