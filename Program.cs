@@ -110,6 +110,10 @@ namespace ConsoleApp1
                         indexFile.Write(info, 0, info.Length);
                     }
                     Pathfinder.driver.Close();
+                    foreach( var link in allCheckedPages)
+                    {
+                        Console.WriteLine(link.Key);
+                    }
                     return;
                 }
 
@@ -144,7 +148,7 @@ namespace ConsoleApp1
                     continue;
                 }
 
-                if (!allCheckedPages.ContainsKey(webUrl)&&!allCheckedPages.ContainsValue(title))
+                if (!allCheckedPages.ContainsKey(webUrl)&& !allCheckedPages.ContainsValue(title))
                 {
                     pageCount.Add(webUrl, 1);
                     allCheckedPages.Add(webUrl, title);
@@ -204,10 +208,10 @@ namespace ConsoleApp1
                     }
                     
                     //skip child pages of pages with query strings
-                    if (newLink.Contains("?") && webUrl.Contains("?"))
-                    {
-                        continue;
-                    }
+                    //if (newLink.Contains("?") && webUrl.Contains("?"))
+                    //{
+                    //    continue;
+                    //}
 
                     //if the page has been visited skip it
                     if (allCheckedPages.ContainsKey(newLink))
@@ -224,8 +228,6 @@ namespace ConsoleApp1
                     }
 
                    
-
-                    Console.WriteLine(newLink);
                     queueToCheck.Enqueue(newLink);
                 }
             }
