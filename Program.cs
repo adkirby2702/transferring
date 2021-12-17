@@ -16,12 +16,21 @@ namespace ConsoleApp1
 {
     public class Pathfinder
     {
+        public struct MyStruct
+        {
+            public List<string> children;
+            public string link;
+            public string title;
+            public string screenshotLocal;
+
+
+        }
         /// A queue of pages to be crawled
         private static Queue<string> queueToCheck = new Queue<string>();
-
         /// All pages visited
-        private static Dictionary<string, string> allCheckedPages = new Dictionary<string, string>();
+        public static Dictionary<string, string> allCheckedPages = new Dictionary<string, string>();
         private static Dictionary<string, int> pageCount = new Dictionary<string, int>();
+        private static Dictionary<string, MyStruct> hierarchy = new Dictionary<string, MyStruct>();
 
         /// A Url that the crawled page must start with. 
         public static string siteName { get; set; }
@@ -29,9 +38,6 @@ namespace ConsoleApp1
         public static int totalCount = 0;
         /// Starting page of crawl.
         public static Uri beginning { get; set; }
-
-        /// event that happens when a correct page is visited
-        public static Action<string, string> visited = null;
 
         public static IWebDriver driver = null;
         public static string title = "not provided";
@@ -42,35 +48,6 @@ namespace ConsoleApp1
                 File.Delete("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html");
             }
             File.WriteAllText("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html", "<!DOCTYPE html>\n<html>\n<head>\n<title> All Pages </title>\n<style>\n@import 'D:\\\\Users\\\\adkir\\\\source\\\\repos\\\\ConsoleApp1\\\\StyleSheet1.css';\n</style>\n</head><br/>\n<body>\n<h1> All Pages </h1>\n<div><ul>");
-
-
-            Pathfinder.visited = (webUrl, title) =>
-            {
-                Console.WriteLine("Visited : " + webUrl);
-                string filePath = "File.csv";
-                File.AppendAllText(filePath, webUrl + "," + title + "\n");
-                totalCount += 1;
-                Console.WriteLine(totalCount);
-                try{
-                    Pathfinder.driver.Navigate().GoToUrl(webUrl);
-                 
-                }
-                catch
-                {
-
-                    return;
-                }
-                Screenshot ss = ((ITakesScreenshot)driver).GetScreenshot();
-                ss.SaveAsFile("D:\\adkir\\Desktop\\screenshotTest\\screenshot" + allCheckedPages.Count().ToString() + ".png", ScreenshotImageFormat.Png);
-                using (FileStream indexFile = File.Open("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html", FileMode.Append))
-                {
-                    Byte[] info = new UTF8Encoding(true).GetBytes("<li><a href='D:\\adkir\\Desktop\\screenshotTest\\screenshot" + allCheckedPages.Count().ToString() + ".png'>" + title + " </a></li>\n");
-                    // Add some information to the file.  
-                    indexFile.Write(info, 0, info.Length);
-                }
-
-
-            };
             Pathfinder.beginning = new Uri("https://peanuts.com/");
             Pathfinder.siteName = "https://peanuts.com/";
             Pathfinder.driver = new ChromeDriver();
@@ -116,8 +93,9 @@ namespace ConsoleApp1
                     }
                     return;
                 }
-
+                MyStruct pageinfo = new MyStruct();
                 var webUrl = queueToCheck.First();
+                
                 var http = new WebClient();
                 string html;
                 try
@@ -150,11 +128,12 @@ namespace ConsoleApp1
 
                 if (!allCheckedPages.ContainsKey(webUrl)&& !allCheckedPages.ContainsValue(title))
                 {
+                    pageinfo.link = webUrl;
+                    pageinfo.title = title;
+                    pageinfo.children = new List<string>();
                     pageCount.Add(webUrl, 1);
                     allCheckedPages.Add(webUrl, title);
-                    //the page passed the tests so it is added
-                    visited(webUrl, title);
-
+                    Pathfinder.Visit(webUrl, title, pageinfo, driver);
                 }
                 var mimeType = http.ResponseHeaders[HttpResponseHeader.ContentType];
                 if (!mimeType.StartsWith("text/html"))
@@ -206,13 +185,6 @@ namespace ConsoleApp1
 
                         continue;
                     }
-                    
-                    //skip child pages of pages with query strings
-                    //if (newLink.Contains("?") && webUrl.Contains("?"))
-                    //{
-                    //    continue;
-                    //}
-
                     //if the page has been visited skip it
                     if (allCheckedPages.ContainsKey(newLink))
                     {
@@ -229,10 +201,48 @@ namespace ConsoleApp1
 
                    
                     queueToCheck.Enqueue(newLink);
+                    if (pageinfo.children == null)
+                    {
+                        Console.WriteLine("list is null");
+                    }
+                    else
+                    {
+                        pageinfo.children.Append(newLink);
+                    }
                 }
+                hierarchy[pageinfo.link] = pageinfo;
+            }
+        }
+        public static void Visit(string webUrl, string title, MyStruct pageinfo, IWebDriver driver)
+        {
+            Console.WriteLine("Visited : " + webUrl);
+            string filePath = "File.csv";
+            File.AppendAllText(filePath, webUrl + "," + title + "\n");
+            Pathfinder.totalCount += 1;
+            Console.WriteLine(Pathfinder.totalCount);
+            try
+            {
+                Pathfinder.driver.Navigate().GoToUrl(webUrl);
+
+            }
+            catch
+            {
+
+                return;
+            }
+            Screenshot ss = ((ITakesScreenshot)driver).GetScreenshot();
+            ss.SaveAsFile("D:\\adkir\\Desktop\\screenshotTest\\screenshot" + Pathfinder.allCheckedPages.Count().ToString() + ".png", ScreenshotImageFormat.Png);
+            pageinfo.screenshotLocal = "D:\\adkir\\Desktop\\screenshotTest\\screenshot" + Pathfinder.allCheckedPages.Count().ToString() + ".png";
+            using (FileStream indexFile = File.Open("D:\\Users\\adkir\\source\\repos\\ConsoleApp1\\ConsoleApp1\\index.html", FileMode.Append))
+            {
+                Byte[] info = new UTF8Encoding(true).GetBytes("<li><a href='D:\\adkir\\Desktop\\screenshotTest\\screenshot" + Pathfinder.allCheckedPages.Count().ToString() + ".png'>" + title + " </a></li>\n");
+                // Add some information to the file.  
+                indexFile.Write(info, 0, info.Length);
             }
         }
     }
+
+    
 
 
 
